@@ -47,6 +47,7 @@ var httpClient = &http.Client{
 	Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 }
 
+//TODO:Agent只init一次,是如何做到Server增加后,Agent的Serverlist括容的呢?
 func (a *Agent) init() {
 	a.ServerList, err = a.getServerList()
 	if err != nil {
@@ -60,6 +61,7 @@ func (a *Agent) init() {
 		a.log("No server node available")
 		panic(1)
 	}
+	//配置XClient,实现服务发现及认证选项的添加
 	a.newClient()
 	if common.LocalIP == "" {
 		a.log("Can not get local address")
@@ -83,15 +85,17 @@ func (a *Agent) Run() {
 
 	// 每隔一段时间更新初始化配置
 	a.configRefresh()
-	
+
 	// 开启各个监控流程 文件监控，网络监控，进程监控
 	a.monitor()
-	
+
 	// 每隔一段时间获取系统信息
 	// 监听端口，服务信息，用户信息，开机启动项，计划任务，登录信息，进程列表等
 	a.getInfo()
 }
 
+//Server动态扩容的关键就在于ServerList,注册服务发现时会将新的服务器列表的KVpair加入,并用随机选择的模式来交互
+//TODO:那么 ServerList是由谁,如何添加的呢?猜测是web端
 func (a *Agent) newClient() {
 	var servers []*client.KVPair
 	for _, server := range a.ServerList {
@@ -109,7 +113,7 @@ func (a *Agent) newClient() {
 	}
 	option := client.DefaultOption
 	option.TLSConfig = conf
-	serverd := client.NewMultipleServersDiscovery(servers)
+	serverd, _ := client.NewMultipleServersDiscovery(servers)
 	a.Client = client.NewXClient("Watcher", FAILMODE, client.RandomSelect, serverd, option)
 	a.Client.Auth(AUTH_TOKEN)
 }
