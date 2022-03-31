@@ -189,8 +189,12 @@ func regServer() {
 func Heartbeat() {
 	log.Println("Start heartbeat thread")
 	for {
+		//检测和mongo的连接
 		mgoCheck()
+		//TODO:注册为服务?是往mongo里存数据?每30s存一次?(覆盖为最新时间?)
 		regServer()
+		//从mongo中获取配置信息更新
+		//TODO:怎么更新的,我只看到查找,没有修改?
 		setConfig()
 		setRules()
 		time.Sleep(time.Second * 30)

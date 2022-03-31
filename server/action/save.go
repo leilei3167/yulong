@@ -24,8 +24,11 @@ func ResultSave(datainfo models.DataInfo) error {
 	// 登录日志、网络连接、进程创建、文件操作 存放在es，其余保存在mongodb
 	if datainfo.Type == "loginlog" || datainfo.Type == "connection" || datainfo.Type == "process" || datainfo.Type == "file" {
 		if datainfo.Type == "loginlog" {
+			//对于登录日志,遍历Data操作数据
 			for _, logininfo := range datainfo.Data {
+				//更新时间字段key
 				time, _ := time.Parse("2006-01-02T15:04:05Z07:00", logininfo["time"])
+				//TODO:为什么删除?
 				delete(logininfo, "time")
 				esdata := models.ESSave{
 					IP:   datainfo.IP,
@@ -35,6 +38,8 @@ func ResultSave(datainfo models.DataInfo) error {
 				models.InsertEs(datainfo.Type, esdata)
 			}
 		} else {
+			//connection,process,file类型的
+			//TODO:将转化为int
 			dataTimeInt, err := strconv.Atoi(datainfo.Data[0]["time"])
 			if err != nil {
 				return err
@@ -48,6 +53,7 @@ func ResultSave(datainfo models.DataInfo) error {
 			models.InsertEs(datainfo.Type, esdata)
 		}
 	} else {
+		//其余要放在MongoDB的数据操作
 		c := models.DB.C("info")
 		count, _ := c.Find(bson.M{"ip": datainfo.IP, "type": datainfo.Type}).Count()
 		if count >= 1 {

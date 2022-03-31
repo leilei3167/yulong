@@ -17,6 +17,7 @@ func conn(netloc string, dbname string) (*mgo.Database, error) {
 }
 
 func mgoCheck() {
+
 	err := DB.Session.Ping()
 	if err != nil {
 		log.Println(err.Error())

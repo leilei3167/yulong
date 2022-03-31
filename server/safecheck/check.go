@@ -265,8 +265,11 @@ func (c *Check) warning() {
 }
 
 // Run 开始检查
+//TODO:此处看不懂,但感觉像是核心逻辑
 func (c *Check) Run() {
+	//实际遍历DataInfo的[]map[string]string字段
 	for _, c.V = range c.Info.Data {
+		//将DataInfo的data赋值给CHeck的V? TODO:?
 		c.BlackFilter()
 		if c.WhiteFilter() {
 			continue
@@ -279,18 +282,20 @@ func (c *Check) Run() {
 // ScanMonitorThread 安全检测线程
 func ScanMonitorThread() {
 	log.Println("Start Scan Thread")
-	// 10个检测goroutine
+	// 10个检测goroutine,从ScanChan = make(chan models.DataInfo, 4096) 中并发获取数据进行检查
 	for i := 0; i < 10; i++ {
 		go func() {
 			c := new(Check)
 			c.CStatistics = models.DB.C("statistics")
 			c.CNoice = models.DB.C("notice")
 			for {
+				//获取PutInfo中放入的DataInfo
 				c.Info = <-ScanChan
 				c.Run()
 			}
 		}()
 	}
+	//TODO:看不懂是在做什么
 	ticker := time.NewTicker(time.Second * 60)
 	for _ = range ticker.C {
 		cache = []string{}

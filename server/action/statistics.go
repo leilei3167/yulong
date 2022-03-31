@@ -1,8 +1,8 @@
 package action
 
 import (
-	"yulong-hids/server/models"
 	"strings"
+	"yulong-hids/server/models"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -22,15 +22,20 @@ func ResultStat(datainfo models.DataInfo) error {
 		"service":    "name",
 		// "processlist": "name",
 	}
+	//根据DataInfo的Type来匹配事先创建的map,不存在该类型则返回
 	if _, ok := mainMapping[datainfo.Type]; !ok {
 		return nil
 	}
+
 	k := mainMapping[datainfo.Type]
 	ip := datainfo.IP
+	//遍历数据[]map[string]string
 	for _, v := range datainfo.Data {
 		if datainfo.Type == "connection" {
+			//以:分隔为字符串切片
 			v[k] = strings.Split(v[k], ":")[0]
 		}
+		//TODO:学习完Go操作MongoDB再看,这里逻辑是?将统计结果也放入DB?
 		count, _ := c.Find(bson.M{"info": v[k], "type": datainfo.Type}).Count()
 		if count >= 1 {
 			err = c.Update(bson.M{"info": v[k], "type": datainfo.Type}, bson.M{
