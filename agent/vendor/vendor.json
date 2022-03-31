@@ -68,7 +68,7 @@
 		},
 		{
 			"checksumSHA1": "7jI6riQFk1QwTEm7htcDHKUD0tY=",
-			"path": "github.com/go-fsnotify/fsnotify",
+			"path": "github.com/fsnotify/fsnotify",
 			"revision": "4da3e2cfbabc9f751898f250b49f2439785783a1",
 			"revisionTime": "2017-03-29T04:21:07Z"
 		},

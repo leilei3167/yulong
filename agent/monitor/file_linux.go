@@ -25,7 +25,7 @@ import (
 	"strings"
 	"yulong-hids/agent/common"
 
-	"github.com/go-fsnotify/fsnotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 func getFileUser(path string) (string, error) {

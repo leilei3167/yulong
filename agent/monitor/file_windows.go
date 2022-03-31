@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package monitor
@@ -126,7 +127,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-fsnotify/fsnotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 // StartFileMonitor 开始文件行为监控
