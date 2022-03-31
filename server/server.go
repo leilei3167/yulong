@@ -73,6 +73,7 @@ func init() {
 	log.Println(models.Config)
 	// 从数据库获取证书和RSA私钥
 	//TODO:这不是在写入吗?Server的配置信息Config从哪来?
+	//A:根据引用追溯,会从DB中搜寻配置文件,获取
 	ioutil.WriteFile("cert.pem", []byte(models.Config.Cert), 0666)
 	//函数向filename指定的文件中写入数据。如果文件不存在将按给出的权限创建文件，否则在写入数据之前清空文件。
 	ioutil.WriteFile("private.pem", []byte(models.Config.Private), 0666)

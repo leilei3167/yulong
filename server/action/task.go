@@ -45,6 +45,7 @@ func TaskThread() {
 		}
 		//查找队列是否有值,没有的话休眠10秒再次查询
 		//TODO:queue是由谁放入的?
+		//A:web由用户插入
 		models.DB.C("queue").Find(bson.M{}).Limit(1).Apply(change, &res)
 		if res.IP == "" {
 			time.Sleep(time.Second * 10)
@@ -76,6 +77,7 @@ func sendTask(task queue, threadpool chan bool) {
 	//提取Type和Command
 	sendData := map[string]string{"type": task.Type, "command": task.Command}
 	//将其序列化,没有错误的话,连接到task.IP的65512端口,TODO:连接到哪里?
+	//A:根据全文搜索,将其发到了daemon的65512的端口
 	if data, err := json.Marshal(sendData); err == nil {
 		conn, err := net.DialTimeout("tcp", task.IP+":65512", time.Second*3)
 		log.Println("sendtask:", task.IP, sendData)
@@ -85,12 +87,14 @@ func sendTask(task queue, threadpool chan bool) {
 		}
 		defer conn.Close()
 		//将序列化为json的sendData,TODO:如何加密?
+		//A:通过将web读取出的证书和私钥(读取出来是string,需转回成真正的密钥才能使用)进行加密
 		encryptData, err := rsaEncrypt(data)
 		if err != nil {
 			saveError(task, err.Error())
 			return
 		}
 		//TODO:为什么要再进行编码成base64,再传输(还强转回[]byte)
+		//A:编码,非必须
 		conn.Write([]byte(base64.RawStdEncoding.EncodeToString(encryptData) + "\n"))
 		//创建缓冲Reader,读取conn的数据,直到读到'\n'
 		reader := bufio.NewReader(conn)
@@ -101,7 +105,7 @@ func sendTask(task queue, threadpool chan bool) {
 		}
 		//记录发送信息方的IP以及消息
 		log.Println(conn.RemoteAddr().String(), msg)
-		//创建结果,并执行转码,获取结果 TODO:将Type和Command传到指定IP的65512端口,由其处理后返回taskResult
+		//创建结果,并执行转码,获取结果 TODO:将Type和Command传到指定IP的65512端口(daemon),由其处理后返回taskResult
 		res := taskResult{}
 		err = json.Unmarshal([]byte(msg), &res)
 		if err != nil {

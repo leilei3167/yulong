@@ -269,7 +269,8 @@ func (c *Check) warning() {
 func (c *Check) Run() {
 	//实际遍历DataInfo的[]map[string]string字段
 	for _, c.V = range c.Info.Data {
-		//将DataInfo的data赋值给CHeck的V? TODO:?
+		//将DataInfo的data赋值给CHeck的V?
+		//TODO:如果在黑名单(rules在web端配置),判断消息来源是否在黑名单,如果时,则执行发送通知
 		c.BlackFilter()
 		if c.WhiteFilter() {
 			continue

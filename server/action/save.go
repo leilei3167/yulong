@@ -29,6 +29,7 @@ func ResultSave(datainfo models.DataInfo) error {
 				//更新时间字段key
 				time, _ := time.Parse("2006-01-02T15:04:05Z07:00", logininfo["time"])
 				//TODO:为什么删除?
+				//A:map里面的time删除然后放入到ES的Time字段,考虑到后期对Time单独建立索引便于查询
 				delete(logininfo, "time")
 				esdata := models.ESSave{
 					IP:   datainfo.IP,
@@ -40,6 +41,7 @@ func ResultSave(datainfo models.DataInfo) error {
 		} else {
 			//connection,process,file类型的
 			//TODO:将转化为int
+			//A:上传的datainfo中的时间推断是一个时间戳(从1970年到现在多少秒)
 			dataTimeInt, err := strconv.Atoi(datainfo.Data[0]["time"])
 			if err != nil {
 				return err

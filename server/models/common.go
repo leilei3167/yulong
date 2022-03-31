@@ -192,6 +192,7 @@ func Heartbeat() {
 		//检测和mongo的连接
 		mgoCheck()
 		//TODO:注册为服务?是往mongo里存数据?每30s存一次?(覆盖为最新时间?)
+		//A:向MongoDB里存入服务器的IP等,便于Agent获取Serverlist,30s更新一次时间,便于客户端判断哪些server被关闭(猜测)
 		regServer()
 		//从mongo中获取配置信息更新
 		//TODO:怎么更新的,我只看到查找,没有修改?

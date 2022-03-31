@@ -131,15 +131,19 @@ func modInverse(a, n *big.Int) (ia *big.Int, ok bool) {
 }
 
 //TODO:根据Private加密?
+//A:Private是前端web上传的String类型的证书,需转换成可用的格式才可以使用
 func rsaEncrypt(origData []byte) ([]byte, error) {
+	//这一部是将私钥(String)转化为pem格式的私钥(才可以使用)
 	block, _ := pem.Decode([]byte(models.Config.Private))
 	if block == nil {
 		return nil, errors.New("public key error")
 	}
 
+	//提取私钥
 	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
+	//这一步才是加密
 	return priKeyEncrypt(rand.Reader, pri, origData)
 }
