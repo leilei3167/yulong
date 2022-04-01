@@ -39,6 +39,7 @@ var (
 	Proto string
 )
 
+//初始化安装路径,操作系统位数,初始化客户端,Proto,
 func init() {
 	M = new(sync.Mutex)
 	if TESTMODE {
@@ -49,18 +50,25 @@ func init() {
 	Arch = "64"
 	if runtime.GOOS == "windows" {
 		// 不受程序编译位数干扰
+		//尝试跳转C:/Windows/SysWOW64,如果为true这为64位
 		if _, err := os.Stat(os.Getenv("SystemDrive") + `/Windows/SysWOW64/`); err != nil {
+			//Getenv检索并返回名为key的环境变量的值。如果不存在该环境变量会返回空字符串。
 			Arch = "32"
 		} else {
 			Arch = "64"
 		}
-		InstallPath = os.Getenv("SystemDrive") + `/yulong-hids/`
+		//安装路径设置为C:/yulong-hids/
+		InstallPath = os.Getenv("SystemDrive") + `/yulong-hids/` //TODO:用"/yulong-hids/" 有啥区别
 	} else {
+		//如果不是windows操作系统 安装路径设置为:/usr/yulong-hids/
 		InstallPath = `/usr/yulong-hids/`
+		//执行getconf LONG_BIT将返回系统位数,判断data是否在[]string切片中
 		if data, _ := CmdExec("getconf LONG_BIT"); InArray([]string{"32", "64"}, data, false) {
 			Arch = data
 		}
 	}
+	//创建客户端:配置Transport
+	//要管理代理、TLS配置、keep-alive、压缩和其他设置,必须配置Transport
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MaxVersion: 0},
 	}

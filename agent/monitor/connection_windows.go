@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 // Package monitor 监控以下关键行为
@@ -192,6 +193,8 @@ import (
 )
 
 // StartNetSniff 开始网络行为监控
+//gopcap用于网络抓包
+//TODO:这一段代码是如何处理的?
 func StartNetSniff(resultChan chan map[string]string) {
 	var pkt *pcap.Packet
 	var resultdata map[string]string
@@ -205,6 +208,7 @@ func StartNetSniff(resultChan chan map[string]string) {
 			continue
 		}
 		pkt.Decode()
+		//构建resultdata,后续经分析处理后将结果放入resultChan
 		resultdata = map[string]string{
 			"source":   "",
 			"dir":      "",

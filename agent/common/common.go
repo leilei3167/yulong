@@ -65,6 +65,7 @@ func Cmdexec(cmd string) string {
 func InArray(list []string, value string, regex bool) bool {
 	for _, v := range list {
 		if regex {
+			//Match检查b中是否存在匹配pattern的子序列,在此出检查value中是否有符合v的子序列
 			if ok, err := regexp.Match(v, []byte(value)); ok {
 				return true
 			} else if err != nil {

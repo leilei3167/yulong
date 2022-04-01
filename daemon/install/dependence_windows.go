@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package install
@@ -30,7 +31,10 @@ func hasService(name string) bool {
 func Dependency(ip string, installPath string, arch string) error {
 	url := fmt.Sprintf("%s://%s/json/download?system=windows&platform=%s&type=data&action=download", common.Proto, ip, arch)
 	pcappath := installPath + "data.zip"
+	//C:/yulong-hids/data.zip
 	log.Println("Download dependent environment package")
+	//TODO:此处写死了pcappath,导致之前部署时无法找到data.zip
+	//去web中下载文件
 	err := downFile(url, pcappath)
 	if err != nil {
 		return err

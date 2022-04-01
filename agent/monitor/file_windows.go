@@ -139,6 +139,7 @@ func StartFileMonitor(resultChan chan map[string]string) {
 		return
 	}
 	defer watcher.Close()
+	//从配置文件中获取需监视的文件目录
 	for _, path := range common.Config.MonitorPath {
 		if strings.HasPrefix(path, "/") {
 			continue

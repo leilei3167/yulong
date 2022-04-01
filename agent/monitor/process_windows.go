@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package monitor
@@ -166,6 +167,7 @@ func StartProcessMonitor(resultChan chan map[string]string) {
 	log.Println("StartProcessMonitor")
 	var buf [255]byte
 	// 开启进程监控提取线程
+	//TODO:找不到这个CaptureProcess
 	go C.CapturePrecess()
 	localaddress, _ := net.ResolveUDPAddr("udp", "127.0.0.1:65530")
 	udplistener, err := net.ListenUDP("udp", localaddress)
@@ -176,6 +178,7 @@ func StartProcessMonitor(resultChan chan map[string]string) {
 	defer udplistener.Close()
 	var resultdata map[string]string
 	for {
+		//从udplistener读取字节 TODO:只读取最多255字节?多余255字节的怎么办?
 		n, _, err := udplistener.ReadFromUDP(buf[0:])
 		if err != nil {
 			log.Println(err.Error())
@@ -183,6 +186,7 @@ func StartProcessMonitor(resultChan chan map[string]string) {
 		}
 		// TYPE|进程名|进程PID|父进程|父进程PID
 		proList := strings.Split(string(buf[0:n-1]), "|")
+		//TODO:父进程PID如果是自己本身,则跳过不发送
 		if s, _ := strconv.Atoi(proList[4]); s == os.Getpid() {
 			continue
 		}
@@ -194,6 +198,7 @@ func StartProcessMonitor(resultChan chan map[string]string) {
 		resultdata["ppid"] = proList[4]
 		resultdata["command"] = ""
 		resultdata["info"] = ""
+		//根据进程PID查询
 		if processInfo, ok := getProcessInfo(proList[2]); ok {
 			resultdata["command"] = *processInfo.CommandLine
 			// 驱动获取的进程名长度最高只有14
@@ -201,10 +206,13 @@ func StartProcessMonitor(resultChan chan map[string]string) {
 			resultdata["name"] = processInfo.Name
 			// }
 		}
+		//判断name或command是否在过滤器的Process字段中
+
 		if common.InArray(common.Config.Filter.Process, strings.ToLower(resultdata["name"]), true) ||
 			common.InArray(common.Config.Filter.Process, strings.ToLower(resultdata["command"]), true) {
 			continue
 		}
+		//直到收集到command或name不在规则中时,将结果反馈
 		resultChan <- resultdata
 	}
 }
