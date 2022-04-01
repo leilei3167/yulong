@@ -50,12 +50,15 @@ func offlineCheckThread() {
 	var msg string
 	var cache []string
 	client := models.DB.C("client")
+	//24小时清空一次缓存
 	go func() {
 		ticker := time.NewTicker(time.Hour * 24)
 		for _ = range ticker.C {
 			cache = []string{}
 		}
 	}()
+
+	//时间差超过1分钟没有响应的加入offlineIPlist
 	for {
 		oneMinuteAgo = time.Now().Add(time.Minute * time.Duration(-5))
 		err := client.Find(bson.M{"uptime": bson.M{"$lte": oneMinuteAgo}}).Distinct("ip", &offlineIPList)

@@ -1,5 +1,21 @@
 package main
 
+/*Server端实现主要思路:
+1.server端不直接与Web端交互,而是通过MongoDB和ES数据库获取Web传入的值(如配置文件,证书,私钥,任务等,通过协程循环获取),在server启动时
+将会执行初始化
+2.Server通过RPC与Agent和daemon进行交互,tls模式注册有两个服务(GetInfo和PutInfo),分别用于Agent提交自己的主机信息获取agent的配置
+以及向Server传入关键的DataInfo,由Server进行分类处理,并存入DB,Server将会把收到的DataInfo放入到ScanChan,交由安全检测线程进行处理
+
+3.Server的核心在于初始化创建的几个线程
+	1.心跳线程:维护与数据库的链接,服务注册更新,刷新配置等
+	2.任务分发线程,会不断的从DB中试图获取任务(由web指定写入DB),获取到queue之后,根据其包含的IP将提取出的任务发送至指定的Agent,SendTask会对任务
+进行加密,通过TCP传输,并获取task的结果存入数据库,此步有并发控制,限制100个协程
+	3.安全检测线程:设置有10个协程不断的从ScanChan中获取由Agent通过RPC传入Server的DataInfo(每个协程都是死循环,没有data时会阻塞),会创建Check
+结构体来容纳DataInfo的数据,分别按照之前获取的配置选项(黑白名单,规则等)来处理数据,例如:如果在黑名单中 则向客户端发送通知Warning()
+	4.客户端健康检测:每30s从数据库读取数据,时间戳间隔一段时间未更新的判定为下线,短期内下线超过20台进行通知;链接检测 每隔一段时间执行连接,离线达到72小时
+会将其数据从数据库清除 TODO:主机的初始列表是从哪里获取的? mongoDB,Web是如何监测接入的Agent并存入DB的?
+	5.ES的异步写入线程,无限循环监听esChan,PutInfo判断需ES存储的数据会被放入esChan,此协程执行存入
+*/
 import (
 	"context"
 	"crypto/tls"

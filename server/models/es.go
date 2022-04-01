@@ -242,6 +242,7 @@ func InsertThread() {
 		log.Println("start BulkProcessor: ", err)
 	}
 	for {
+		//被PutInfo判断为需Es存入的数据会放入esChan,此处取出并执行放入
 		data = <-esChan
 		p.Add(elastic.NewBulkIndexRequest().Index(nowindicesName).Type(data.dataType).Doc(data.data))
 	}
