@@ -265,7 +265,6 @@ func (c *Check) warning() {
 }
 
 // Run 开始检查
-//TODO:此处看不懂,但感觉像是核心逻辑
 func (c *Check) Run() {
 	//实际遍历DataInfo的[]map[string]string字段
 	for _, c.V = range c.Info.Data {
@@ -296,7 +295,7 @@ func ScanMonitorThread() {
 			}
 		}()
 	}
-	//TODO:看不懂是在做什么
+	//60s清空一次缓存
 	ticker := time.NewTicker(time.Second * 60)
 	for _ = range ticker.C {
 		cache = []string{}
