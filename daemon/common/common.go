@@ -131,6 +131,8 @@ func BindAddr() string {
 	conn, _ := net.Dial("udp", "114.114.114.114:53")
 	defer conn.Close()
 	localAddr := conn.LocalAddr().String()
+	//获取:最后出现的索引位置
 	idx := strings.LastIndex(localAddr, ":")
+	//只提取IP地址加固定的:65512端口
 	return fmt.Sprintf("%s:65512", localAddr[0:idx])
 }

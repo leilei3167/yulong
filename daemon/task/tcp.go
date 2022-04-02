@@ -24,18 +24,22 @@ func (t *taskServer) listen() (err error) {
 }
 
 func (t *taskServer) run() {
+	//获取TCPListener字段,获取本机出口IP 固定监听65512端口
 	err := t.listen()
 	if err != nil {
 		return
 	}
 	log.Println("Start the task listener thread")
+	//开启监听 出口IP
 	for {
 		tcpConn, err := t.TCPListener.Accept()
 		if err != nil {
 			fmt.Println("Accept new TCP listener error:", err.Error())
 			continue
 		}
+		//获取ServerIP,任务由Web存在数据库,由Server获取后发送给指定IP
 		t.ServerIP = strings.SplitN(tcpConn.RemoteAddr().String(), ":", 2)[0]
+		//获取到IP之后 需判断是否是在Serverlist 中 ,否则断开连接
 		if t.isServer() {
 			t.tcpPipe(tcpConn)
 		} else {
@@ -44,8 +48,10 @@ func (t *taskServer) run() {
 	}
 }
 func (t *taskServer) isServer() bool {
+	//TODO:server端没有注册http相关的服务 为什么能获取list
 	t.setServerList()
 	for _, ip := range t.ServerList {
+		//用:分割ip,最终只返回2个元素
 		if t.ServerIP == strings.SplitN(ip, ":", 2)[0] {
 			return true
 		}
@@ -102,6 +108,7 @@ func (t *taskServer) tcpPipe(conn net.Conn) {
 
 // WaitThread 接收任务线程
 func WaitThread() {
+	//从web获取到公钥
 	setPublicKey()
 	var t taskServer
 	t.run()

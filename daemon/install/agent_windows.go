@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package install
@@ -8,7 +9,7 @@ import (
 	"yulong-hids/daemon/common"
 )
 
-// Agent 下载安装agent
+// Agent 下载安装agent (下载的是agent.exe)
 func Agent(ip string, installPath string, arch string) error {
 	// 下载agent.exe
 	log.Println("Download Agent")
@@ -22,7 +23,7 @@ func Agent(ip string, installPath string, arch string) error {
 	if err != nil {
 		return err
 	}
-	// 安装daemon为服务
+	// 再次执行daemon.exe并指定register,安装daemon为服务
 	// TODO daemon程序的错误输出都在stdout, 这里如果daemon报错是无法感知的
 	cmd := installPath + "daemon.exe -register -netloc " + ip
 	out, err := common.CmdExec(cmd)

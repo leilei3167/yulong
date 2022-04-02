@@ -1,11 +1,11 @@
 package install
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"crypto/md5"
 	"log"
 	"net/http"
 	"os"
@@ -21,15 +21,20 @@ func downFile(url string, svaepath string) error {
 	request.Close = true
 	if res, err := common.HTTPClient.Do(request); err == nil {
 		defer res.Body.Close()
+		//创建了一个data.zip文件
 		file, err := os.Create(svaepath)
+		//Create采用模式0666（任何人都可读写，不可执行）创建一个名为name的文件，如果文件已存在会截断它（为空文件）。
+		//如果成功，返回的文件对象可用于I/O
 		if err != nil {
 			return err
 		}
+		//将Body的内容拷贝进file,直到Body遇到EOF或错误
 		io.Copy(file, res.Body)
 		file.Close()
 		if runtime.GOOS == "linux" {
 			os.Chmod(svaepath, 0750)
 		}
+		//验证下载
 		fileInfo, err := os.Stat(svaepath)
 		// log.Println(res.ContentLength, fileInfo.Size())
 		if err != nil || fileInfo.Size() != res.ContentLength {
@@ -117,7 +122,6 @@ func FileMD5String(filePath string) (MD5String string, err error) {
 	io.Copy(md5h, file)
 	return fmt.Sprintf("%x", md5h.Sum([]byte(""))), nil
 }
-
 
 // CheckAgentHash 检查Agent的哈希值是否匹配
 func CheckAgentHash(fileHash string, ip string, arch string) (is bool) {

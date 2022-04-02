@@ -27,18 +27,21 @@ func hasService(name string) bool {
 	return false
 }
 
-// Dependency 下载->释放->安装依赖文件和服务
+// Dependency 下载->释放->安装依赖文件和服务(data.zip)
 func Dependency(ip string, installPath string, arch string) error {
 	url := fmt.Sprintf("%s://%s/json/download?system=windows&platform=%s&type=data&action=download", common.Proto, ip, arch)
 	pcappath := installPath + "data.zip"
 	//C:/yulong-hids/data.zip
 	log.Println("Download dependent environment package")
 	//TODO:此处写死了pcappath,导致之前部署时无法找到data.zip
-	//去web中下载文件
+	//去web中下载文件,储存路径C:/yulong-hids/data.zip
 	err := downFile(url, pcappath)
 	if err != nil {
 		return err
 	}
+
+	//打开zip文件
+	//TODO:学习如何操作压缩包
 	rc, err := zip.OpenReader(pcappath)
 	if err != nil {
 		return err

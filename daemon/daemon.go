@@ -1,5 +1,11 @@
 package main
 
+/*daemon逻辑
+1.首先会判断命令行所输入的参数判断是安装卸载,如果是安装,则从通过-netlco传入的web 的ip去下载相应的文件,依次安装环境依赖,Agent,下载
+agent后会启动daemon.exe指定注册为服务(调用注册逻辑)并启动(net start yulong-hids)
+2.开启服务,开启任务接收协程(WaitThread),并运通过命令行Agent.exe(Wait阻塞)
+3.
+*/
 import (
 	"flag"
 	"log"
@@ -22,14 +28,18 @@ var (
 	registeredBool *bool
 )
 
+//创建服务Service,以及Start run 方法
 type program struct{}
 
+//Service接口的Start方法
 func (p *program) Start(s service.Service) error {
 	go p.run()
 	return nil
 }
 
+//开启daemon的服务
 func (p *program) run() {
+	//开启接收任务线程
 	go task.WaitThread()
 	var agentFilePath string
 	if runtime.GOOS == "windows" {
@@ -40,13 +50,17 @@ func (p *program) run() {
 	for {
 		common.M.Lock()
 		log.Println("Start Agent")
+		/*Command函数返回一个*Cmd，用于使用给出的参数执行name指定的程序。返回值只设定了Path和Args两个参数。
+		如果name不含路径分隔符，将使用LookPath获取完整路径；否则直接使用name。参数arg不应包含命令名。*/
 		common.Cmd = exec.Command(agentFilePath, common.ServerIP)
-		err := common.Cmd.Start()
+		err := common.Cmd.Start() //开始执行Cmd中包含的命令,但并不会等待该命令完成即返回。Wait方法会返回命令的返回状态码并在命令返回后释放相关的资源。
 		common.M.Unlock()
 		if err == nil {
 			common.AgentStatus = true
 			log.Println("Start Agent successful")
-			err = common.Cmd.Wait()
+			//由于Start运行Agent,如果Agent没有问题,将会一直阻塞到Wait处,所以不存在10秒开启一个Agent
+			//此处可以理解为Agent因问题退出,每10s将会执行重启
+			err = common.Cmd.Wait() //Wait会阻塞直到该命令执行完成，该命令必须是被Start方法开始执行的。
 			if err != nil {
 				common.AgentStatus = false
 				log.Println("Agent to exit：", err.Error())
@@ -82,9 +96,10 @@ func main() {
 		Description: "集实时监控、异常检测、集中管理为一体的主机安全监测系统",
 		Arguments:   []string{"-netloc", common.ServerIP}, //从命令行获取的ServerIP
 	}
-	//生成daemon服务
+	//生成daemon服务,TODO:将prg相应的方法注册给Service?
 	prg := &program{}
 	var err error
+	//创建新的Service
 	common.Service, err = service.New(prg, svcConfig)
 	if err != nil {
 		log.Println("New a service error:", err.Error())
@@ -120,6 +135,7 @@ func main() {
 			flag.PrintDefaults()
 			return
 		}
+		//安装Agent
 		err := install.Agent(common.ServerIP, common.InstallPath, common.Arch)
 		if err != nil {
 			log.Println("Install agent error:", err.Error())
@@ -128,12 +144,14 @@ func main() {
 		log.Println("Installed!")
 		return
 	}
-	// 安装daemon为服务
+	// 安装daemon为服务(由安装Agent调用,并且Agent会执行net start yullong-hids命令直接启动服务)
 	if *registeredBool {
+		//安装服务
 		err = common.Service.Install()
 		if err != nil {
 			log.Println("Install daemon as service error:", err.Error())
 		} else {
+			//开启服务
 			if err = common.Service.Start(); err != nil {
 				log.Println("Service start error:", err.Error())
 			} else {
@@ -142,6 +160,7 @@ func main() {
 		}
 		return
 	}
+	//运行服务 TODO:在安装 Agent时就已经net start yulong-hids了 和这一步是否有冲突?
 	err = common.Service.Run()
 	if err != nil {
 		log.Println("Service run error:", err.Error())

@@ -13,6 +13,7 @@ import (
 )
 
 func setPublicKey() {
+	//获取Web上传的公钥
 	var res map[string]string
 	url := common.Proto + "://" + common.ServerIP + common.PUBLICKEY_API
 	resp, err := common.HTTPClient.Get(url)
