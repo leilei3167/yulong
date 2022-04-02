@@ -16,7 +16,7 @@ type Task struct {
 func (t *Task) Run() []byte {
 	switch t.Type {
 	case "reload":
-		t.reload()
+		t.reload() //因为守护进程的存在,10s后会再次启动Agent
 	case "quit":
 		t.quit()
 	case "kill":
@@ -44,6 +44,8 @@ func (t *Task) reload() {
 		t.Result["data"] = err.Error()
 	}
 }
+
+//TODO:和reload有什么区别
 func (t *Task) quit() {
 	if common.AgentStatus {
 		common.Cmd.Process.Kill()

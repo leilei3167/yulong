@@ -71,6 +71,7 @@ func leftPad(input []byte, size int) (out []byte) {
 	return
 }
 func rsaDecrypt(ciphertext []byte) ([]byte, error) {
+	//publickey从URL中下载 还是string,需要转成真正可用的公钥
 	block, _ := pem.Decode([]byte(common.PublicKey))
 	if block == nil {
 		return nil, errors.New("public key error")
@@ -79,5 +80,6 @@ func rsaDecrypt(ciphertext []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	//执行解码
 	return pubKeyDecrypt(pub.(*rsa.PublicKey), ciphertext)
 }

@@ -40,6 +40,7 @@ func (t *taskServer) run() {
 		//获取ServerIP,任务由Web存在数据库,由Server获取后发送给指定IP
 		t.ServerIP = strings.SplitN(tcpConn.RemoteAddr().String(), ":", 2)[0]
 		//获取到IP之后 需判断是否是在Serverlist 中 ,否则断开连接
+		//TODO:这里没有为每个连接开启协程处理
 		if t.isServer() {
 			t.tcpPipe(tcpConn)
 		} else {
@@ -79,13 +80,15 @@ func (t *taskServer) tcpPipe(conn net.Conn) {
 	if err != nil {
 		return
 	}
+	//Server将加密后的任务编码为了base4,执行转码
 	decodeBytes, _ := base64.RawStdEncoding.DecodeString(string(message))
+	//再用公钥解码
 	decryptdata, err := rsaDecrypt(decodeBytes)
 	if err != nil {
 		log.Println("Decrypt rsa text in tcpPipe error:", err.Error())
 		return
 	}
-	var taskData map[string]string
+	var taskData map[string]string //Server传过来的任务是map[string]string{"type": task.Type, "command": task.Command}
 	err = json.Unmarshal(decryptdata, &taskData)
 	if err != nil {
 		log.Println("Unmarshal json text in tcpPipe error", err.Error())
@@ -99,9 +102,10 @@ func (t *taskServer) tcpPipe(conn net.Conn) {
 	if _, ok := taskData["command"]; ok {
 		data = taskData["command"]
 	}
+	//构建Task的结构(包含Type,Command,以及结果),并执行
 	result := map[string]string{"status": "false", "data": ""}
 	T := Task{taskType, data, result}
-	if sendResult := T.Run(); len(sendResult) != 0 {
+	if sendResult := T.Run(); len(sendResult) != 0 { //Run中会直接把结果编码为Json(未加密)
 		conn.Write(sendResult)
 	}
 }

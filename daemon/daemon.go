@@ -4,7 +4,14 @@ package main
 1.首先会判断命令行所输入的参数判断是安装卸载,如果是安装,则从通过-netlco传入的web 的ip去下载相应的文件,依次安装环境依赖,Agent,下载
 agent后会启动daemon.exe指定注册为服务(调用注册逻辑)并启动(net start yulong-hids)
 2.开启服务,开启任务接收协程(WaitThread),并运通过命令行Agent.exe(Wait阻塞)
-3.
+3.daemon开启接收任务的协程,并且启动守护进程的逻辑(执行运行agent的命令,wait阻塞,一旦agent运行终止则执行重启)
+4.接收任务协程首先会获取公钥(web的URL直接获取),取得本机出口IP后会固定开启tcp监听65512端口,一旦有链接接入首先会判断其ip是否在serverlist中(URL中获取)
+5.对于在serverlist的链接请求,交由tcpPipe处理,tcpPipe会接收Server传过来的任务(map[string]string类型,包含type和command),并执行解码,将结果放入
+Task结构体,再执行Task的run方法,根据Type的类型不同执行处理(switch语句,如Kill,quit,update等),是通过common包中的Cmd字段实现对Agent的控制的
+(common.Cmd = exec.Command(agentFilePath, common.ServerIP),并将结果进行回传
+6.Web和Deamon Agent的直接交互只有获取服务器列表和获取app(更新),甚至任务都是通过存入数据库由Server进行转发的
+//TODO:daemon如何退出?
+
 */
 import (
 	"flag"
