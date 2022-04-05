@@ -10,7 +10,7 @@ MAINTAINER Jason Cooper "mrderek@protonmail.com"
 RUN mkdir /web
 WORKDIR /web
 COPY --from=builder /go/src/yulong-hids/web/ .
-RUN cp ./conf/app-config-sample.conf ./conf/app.conf
+RUN cp ./conf/app.conf ./conf/app.conf
 RUN apk update
 RUN apk upgrade
 RUN apk add ca-certificates && update-ca-certificates
